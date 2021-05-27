@@ -8,6 +8,7 @@ const addresses = {
   router: '0x05ff2b0db69458a0750badebc4f9e13add608c7f',
   recipient: '0x2197bd43a119565836d2fc6cc4fcf1a029fd5f9b',
   target:   '0x84ab3da404041c0776e4f3eb9492f9e5701503fe',
+  Zero:     '0x0000000000000000000000000000000000000000'
 }
 
 const mnemonic = 'urban assume glimpse file stand uncover face uphold gadget charge melt phone';
@@ -24,16 +25,14 @@ const factory = new ethers.Contract(
 );
 
 
-//event Mint(address indexed sender, uint amount0, uint amount1);
-
-// const router = new ethers.Contract(
-//   addresses.router,
-//   [
-//     'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
-//     'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
-//   ],
-//   account
-// );
+const router = new ethers.Contract(
+  addresses.router,
+  [
+    'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
+    'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
+  ],
+  account
+);
 
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   console.log(Date.now() + "\n");
@@ -58,43 +57,24 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   }
 
   if(typeof tokenIn === 'undefined') {
+    console.log('undefined',tokenIn);
     return;
   }
 
-  if(tokenOut != addresses.target) {
-    return
-  }
+  // if(tokenOut != addresses.target) {
+  //   return
+  // }
 
+  msg = `
+      New pair detected
+      =================
+      token0: ${token0}
+      token1: ${token1}
+      pairAddress: ${pairAddress}
+    `;
 
-  const pair = new ethers.Contract(
-    pairAddress,
-    [
-      'event Mint(address indexed sender, uint amount0, uint amount1)',
-    ],
-    account
-  );
+ // eamil('duanchuanfu00@163.com','hayden','916140875@qq.com','PairCreated',msg);
 
-
-  pair.on('Mint', async (sender, amount0, amount1) => {
-
-    console.log(`
-      AddLiquidity
-        =================
-        sender: ${sender}
-        amount0: ${amount0}
-        amount1: ${amount1}
-    `);
-
-    let msg = `
-        AddLiquidity
-          =================
-          sender: ${sender}
-          amount0: ${amount0}
-          amount1: ${amount1}
-      `;
-
-
-    eamil('duanchuanfu00@163.com','hayden','916140875@qq.com','AddLiquidity',msg);
   });
 
 
@@ -145,7 +125,5 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   // console.log('Transaction receipt');
   // console.log(receipt);
 
-  
-});
 
 console.log("listening for pair to created!!!");
