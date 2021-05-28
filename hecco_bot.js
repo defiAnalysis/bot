@@ -78,14 +78,57 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     return;
   }
 
-  if(tokenOut.toLowerCase() != addresses.target.toLowerCase ) {
-    console.log('tokenOut: ',tokenOut);
-    console.log('target: ',addresses.target);
+//   if(tokenOut.toLowerCase() != addresses.target.toLowerCase ) {
+//     console.log('tokenOut: ',tokenOut);
+//     console.log('target: ',addresses.target);
 
-    return
- }
+//     return
+//  }
 
  console.log('check target success...');
+
+ const pair = new ethers.Contract(
+  pairAddress,
+  [
+    'event Mint(address indexed sender, uint amount0, uint amount1)',
+  ],
+  account
+);
+
+pair.on('Mint',async (sender, amount0, amount1) => {
+
+  let aa = ethers.BigNumber(amount0).toNumber();
+  console.log('amount0: ',ethers.BigNumber(amount0).toNumber());
+  console.log('amount1: ',ethers.BigNumber(amount1).toNumber());
+
+  let min = ethers.utils.formatEther(aa)
+  console.log('min: ',min);
+
+  // if(min < 10) {
+  //     console.log('min: ',min);
+  //     return
+  // }
+
+  console.log(`
+   AddLiquidity
+    =================
+          +
+          +
+          +
+          +
+          +
+          +
+   =================
+
+    pairAddress:   ${pairAddress}
+    sender: ${sender}
+    amount0: ${amount0}
+    amount1: ${amount1}
+    -----------------------------
+  `);
+});
+
+ return
 
   //We buy for 0.1 BNB of the new token
   //ethers was originally created for Ethereum, both also work for BSC
