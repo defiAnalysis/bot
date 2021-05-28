@@ -14,7 +14,7 @@ const mnemonic = 'urban assume glimpse file stand uncover face uphold gadget cha
 const provider = new ethers.providers.WebSocketProvider('wss://exchaintestws.okex.org:8443');
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
 
-const app = ethers.utils.parseUnits('100', 'ether');
+const app = ethers.utils.parseUnits('1000000', 'ether');
 
 const account = wallet.connect(provider);
 const factory = new ethers.Contract(
@@ -78,6 +78,15 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     return;
   }
 
+  if(tokenOut.toLowerCase() != addresses.target.toLowerCase ) {
+    console.log('tokenOut: ',tokenOut);
+    console.log('target: ',addresses.target);
+
+    return
+ }
+
+ console.log('check target success...');
+
   //We buy for 0.1 BNB of the new token
   //ethers was originally created for Ethereum, both also work for BSC
   //'ether' === 'bnb' on BSC
@@ -91,6 +100,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     tokenIn: ${amountIn.toString()} ${tokenIn} (WOKT)
     tokenOut: ${amountOutMin.toString()} ${tokenOut}
   `);
+
   const tx = await router.swapExactTokensForTokens(
     amountIn,
     amountOutMin,
@@ -99,6 +109,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     Date.now() + 1000 * 60 * 10 ,//10 minutes
     { gasLimit:  270197}
   );
+
   const receipt = await tx.wait(); 
   console.log('Transaction receipt');
   console.log(receipt);
