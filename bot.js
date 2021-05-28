@@ -55,14 +55,15 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     pair.on('Mint',async (sender, amount0, amount1) => {
       let min = 0;
 
-      let a0 = ethers.utils.formatEther(amount0);
-      let a1 = ethers.utils.formatEther(min);
-
+    
       if(a0 < a1) {
         min = a0;
       }else{
         min = a1;
       }
+
+      console.log('amount0: ',ethers.BigNumber(amount0).toNumber());
+      console.log('amount1: ',ethers.BigNumber(amount0).toNumber());
 
       console.log('min: ',min);
 
