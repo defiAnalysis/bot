@@ -1,5 +1,7 @@
 const ethers = require('ethers');
 const eamil = require('./email');
+const fs = require('fs');
+const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 const addresses = {
   WBNB: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
@@ -9,8 +11,6 @@ const addresses = {
   target:   '0x84ab3da404041c0776e4f3eb9492f9e5701503fe',
   Zero:     '0x0000000000000000000000000000000000000000'
 }
-
-const mnemonic = 'urban assume glimpse file stand uncover face uphold gadget charge melt phone';
 
 const provider = new ethers.providers.WebSocketProvider('wss://bsc.getblock.io/mainnet/?api_key=6824ca15-ca20-453f-b1fe-6d454a76a470');
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
@@ -33,6 +33,8 @@ const router = new ethers.Contract(
   account
 );
 
+console.log('addr: ',wallet.address);
+
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   console.log(Date.now() + "\n");
   console.log(`
@@ -44,6 +46,24 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     -----------------------------
   `);
 
+  let tokenin, tokenout;
+
+  if(addresses.WBNB == token0) {
+    tokenin =  token0;
+    tokenout = token1;
+  }
+
+  if(addresses.WBNB == token1) {
+    tokenin = token1;
+    tokenout = token0;
+  }
+
+  if(typeof tokenin === 'undefined') {
+    console.log('undefined',tokenin);
+
+    return;
+  }
+
     const pair = new ethers.Contract(
       pairAddress,
       [
@@ -53,17 +73,11 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     );
 
     pair.on('Mint',async (sender, amount0, amount1) => {
-      let min = 0;
 
-    
-      if(a0 < a1) {
-        min = a0;
-      }else{
-        min = a1;
-      }
+      console.log('amount0: ',ethers.utils.formatEther(amount0));
+      console.log('amount1: ',ethers.utils.formatEther(amount1));
 
-      console.log('amount0: ',ethers.BigNumber(amount0).toNumber());
-      console.log('amount1: ',ethers.BigNumber(amount0).toNumber());
+      let min = Math.min(ethers.utils.formatEther(amount0),ethers.utils.formatEther(amount1));
 
       console.log('min: ',min);
 
