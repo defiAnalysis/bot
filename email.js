@@ -1,7 +1,9 @@
 const nodemailer  = require("nodemailer");
+const fs = require('fs');
 
 // 参数：发件人，收件人，主题，正文（支持html格式）
 let sendMail = function(from, aliasName, tos, subject, msg) {
+    const pass = fs.readFileSync("config.cfg").toString().trim();
     const smtpTransport = nodemailer.createTransport({
     host: 'smtp.163.com',
     secureConnection: true, // use SSL
@@ -9,7 +11,7 @@ let sendMail = function(from, aliasName, tos, subject, msg) {
     port: 465,
     auth: {
         user: from,
-        pass: '2866093520I@U',
+        pass: pass,
     }
     });
 
