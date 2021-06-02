@@ -3,14 +3,17 @@ const eamil = require('./email');
 const fs = require('fs');
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+
 const addresses = {
   WBNB: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
   factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73', 
   router: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
   recipient: '0x2197bd43a119565836d2fc6cc4fcf1a029fd5f9b',
   target:   '0x84ab3da404041c0776e4f3eb9492f9e5701503fe',
-  Zero:     '0x0000000000000000000000000000000000000000'
+  Zero:     '0x0000000000000000000000000000000000000000',
+  USDT:     `0xe579156f9decc4134b5e3a30a24ac46bb8b01281`
 }
+
 
 const provider = new ethers.providers.WebSocketProvider('wss://bsc.getblock.io/mainnet/?api_key=6824ca15-ca20-453f-b1fe-6d454a76a470');
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
@@ -28,6 +31,7 @@ const factory = new ethers.Contract(
 const router = new ethers.Contract(
   addresses.router,
   [
+    'function WETH() external pure returns (address)',
     'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
     'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
   ],
@@ -35,6 +39,7 @@ const router = new ethers.Contract(
 );
 
 console.log('addr: ',wallet.address);
+
 
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   console.log(Date.now() + "\n");

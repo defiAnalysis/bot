@@ -1,15 +1,28 @@
 const ethers = require('ethers');
 
+require('dotenv').config();
+
+const fs = require('fs');
+const mnemonic = fs.readFileSync(".secret").toString().trim();
+
+//king kong swap
 const addresses = {
   WOKT: '0x70c1c53E991F31981d592C2d865383AC0d212225',
   factory: '0xDcAA842dC9515CA4d2bB939d8AF96DD1e8607482', 
   router: '0xD9Ee582C00E2f6b0a5A0F4c18c88a30e49C0304b',
   recipient: '0x40ee5F79fc7c370b082B16E836bEF74b8A3D9Ad2',
-  target:   '0x40ee5F79fc7c370b082B16E836bEF74b8A3D9Ad2', 
-  Zero:     '0x0000000000000000000000000000000000000000000000000000000000000000'
+  target:   '0x40ee5F79fc7c370b082B16E836bEF74b8A3D9Ad2',
+  USDT:     '0xe579156f9decc4134b5e3a30a24ac46bb8b01281',
+  ORACLE:   '0xaEAaf9bE4F49aFb38801dd6aA43e4Fb324894761'
 }
 
-const mnemonic = 'urban assume glimpse file stand uncover face uphold gadget charge melt phone';
+// const addresses = {
+//   WOKT: '0x2219845942d28716c0f7c605765fabdca1a7d9e0',
+//   factory: '0xD68B1DCDe3bAeB3FF1483Ad33c3efC6B6e0A8E4C', 
+//   router: '0x2f46e5ff1f616cfc00f4e6fa2effba4b0aaa7b6f',
+//   recipient: '0x40ee5F79fc7c370b082B16E836bEF74b8A3D9Ad2',
+//   target:   '0x40ee5F79fc7c370b082B16E836bEF74b8A3D9Ad2'
+// }
 
 const provider = new ethers.providers.WebSocketProvider('wss://exchaintestws.okex.org:8443');
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
@@ -17,19 +30,33 @@ const wallet = ethers.Wallet.fromMnemonic(mnemonic);
 const app = ethers.utils.parseUnits('1000000', 'ether');
 
 const account = wallet.connect(provider);
+
 const factory = new ethers.Contract(
   addresses.factory,
   ['event PairCreated(address indexed token0, address indexed token1, address pair, uint)'],
   account
 );
+
 const router = new ethers.Contract(
   addresses.router,
   [
+    'function WETH() external pure returns (address)',
     'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
     'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
   ],
   account
 );
+
+
+const kswp_route = new ethers.Contract(
+    '0x2f46e5ff1f616cfc00f4e6fa2effba4b0aaa7b6f',
+    [
+      'function WETH() external pure returns (address)',
+    ],
+    account
+)
+
+
 
 const wokt = new ethers.Contract(
   addresses.WOKT,
@@ -49,6 +76,21 @@ const init = async () => {
   console.log('Transaction receipt');
   console.log(receipt.status);
 }
+
+(async()=>{
+  let amountIn = ethers.utils.parseUnits('1','ether');
+  const okt_address = await router.WETH();
+  const amounts = await router.getAmountsOut(amountIn, [okt_address,addresses.USDT]);
+  console.log('1 price: ',amounts[1].toString());
+
+  // const wokt = await kswp_route.WETH();
+  // console.log('wokt address: ',wokt);
+  const wokt = '0x2219845942d28716c0f7c605765fabdca1a7d9e0';
+  const price = await kswp_oracle.getCurrentPrice(wokt);
+  console.log('kswap price: ',price.toString());
+
+})()
+
 
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   console.log(`
