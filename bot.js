@@ -14,6 +14,7 @@ const mnemonic = 'urban assume glimpse file stand uncover face uphold gadget cha
 
 const provider = new ethers.providers.WebSocketProvider('wss://bsc.getblock.io/mainnet/?api_key=6824ca15-ca20-453f-b1fe-6d454a76a470');
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
+
 const account = wallet.connect(provider);
 const factory = new ethers.Contract(
   addresses.factory,
@@ -53,22 +54,12 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     );
 
     pair.on('Mint',async (sender, amount0, amount1) => {
-      let min = 0;
-
-    
-      if(a0 < a1) {
-        min = a0;
-      }else{
-        min = a1;
-      }
-
-      console.log('amount0: ',ethers.BigNumber(amount0).toNumber());
-      console.log('amount1: ',ethers.BigNumber(amount0).toNumber());
-
-      console.log('min: ',min);
+   
+      let min = Math.min(ethers.utils.formatEther(amount0,amount1))
 
       if(min < 10) {
-          console.log('min: ',min);
+          console.log('min < 10');
+
           return
       }
 
