@@ -3,18 +3,24 @@ const fs = require('fs');
 
 
 const mnemonic = fs.readFileSync(".secret").toString().trim();
-
-const provider = new ethers.providers.WebSocketProvider('wss://exchaintestws.okex.org:8443');
+const TEST_NETWORK = 'wss://exchaintestws.okex.org:8443'
+const MAIN_NETWORK = 'wss://exchainws.okex.org:8443'
+const provider = new ethers.providers.WebSocketProvider(MAIN_NETWORK);
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
 
 const account = wallet.connect(provider);
 
 const KKT_ROUTE = "0xD9Ee582C00E2f6b0a5A0F4c18c88a30e49C0304b";
-const KSP_ROUTE = "0x2f46e5ff1f616cfc00f4e6fa2effba4b0aaa7b6f";
+const KSP_ROUTE = "0x2f46e5fF1F616cfc00F4e6fA2eFFbA4B0AAA7b6F";
 const USDT = "0xe579156f9dEcc4134B5E3A30a24Ac46BB8B01281";
 
 const ksp_wokt = '0x2219845942d28716c0f7c605765fabdca1a7d9e0';
 const kks_wokt = '0x70c1c53e991f31981d592c2d865383ac0d212225';
+// const kst = '0x97019205d81ed9302f349f18116fe3ddec37d384';
+
+const main_usdt = '0x382bb369d343125bfb2117af9c149795c6c65c50';
+const AI_ROUTER = '0x7457197c455fCf4d454Df2C06ecD05DbF25Efb92';
+const SUSHI_RPUTER = '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506';
 
 const buy_path= [kks_wokt,USDT];
 const sell_path= [USDT,ksp_wokt];
@@ -28,21 +34,22 @@ const expireDate = Date.now() + 1000 * 60 * 10 ;//10 minutes
 let flag = 0;
 
 //-------------------------------------get king kong swap price-----------------------------------------------------------//
-const kkt_router = new ethers.Contract (
-    KKT_ROUTE,
+const airouter = new ethers.Contract (
+    AI_ROUTER,
     [
-        'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
-        'function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
-        'function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
+        'function WETH() external pure returns (address)',
+        'function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)',
     ],
     account
 )
 
-
 //king kong swap getprice
-let getKKSPrices=(async() => {
-    const path = [kks_wokt,USDT];
-    const price = await kkt_router.getAmountsOut(amountIn,path);
+let getAIPrices=(async() => {
+   const wokt = '0x8f8526dbfd6e38e3d8307702ca8469bae6c56c15';
+    const path = [wokt,main_usdt];
+    const price = await airouter.getAmountsOut(amountIn,path);
+
+    console.log('price:========',price);
     
     return price[price.length-1].div(10000000000);
 })
@@ -50,9 +57,10 @@ let getKKSPrices=(async() => {
 
 
 //---------------------------------get kswap price-------------------------------------------------------------------------------------//
-  const kswp_router = new ethers.Contract (
-    KSP_ROUTE,
+  const sushirouter = new ethers.Contract (
+    SUSHI_RPUTER,
     [
+        'function WETH() external pure returns (address)',
         'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
         'function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)',
         'function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)'
@@ -60,9 +68,9 @@ let getKKSPrices=(async() => {
     account
 )
     
-let getKSPPrice=(async() => {
-
-    const path = [ksp_wokt,USDT];
+let getSuShiPrice=(async() => {
+    let wokt = await sushirouter.WETH();
+    const path = [wokt,main_usdt];
     const price = await kswp_router.getAmountsOut(amountIn,path);
     
     
@@ -71,11 +79,11 @@ let getKSPPrice=(async() => {
 
 
 let checkDifference=async() => {
-    const kktPrice = await  getKKSPrices();
-    const kspPrice = await getKSPPrice();
+    const kktPrice = await  getAIPrices();
+    const kspPrice = await getSuShiPrice();
 
-    console.log("kktPrice: ",kktPrice.toString());
-    console.log("kspPrice: ",kspPrice.toString());
+    console.log("AIPrice: ",kktPrice.toString());
+    console.log("SuShiPrice: ",kspPrice.toString());
 
     const Difference = kktPrice-kspPrice;
     console.log("Difference: ",Difference);
@@ -140,15 +148,13 @@ let buyUSDT=async() =>{
 
 //usdt ---> okt
 let sellUSDT=async() =>{
-    const nonce = await provider.getTransactionCount(wallet.address);
-    let tx = await kkt_router.swapExactTokensForETH(
-        buy_amount,
+    let tx = await kswp_router.swapExactTokensForETH(
+        1000000000,
         0,
         sell_path,
         wallet.address,
         expireDate,
         {
-            nonce: nonce+1,
             gasLimit:500000,
             gasPrice: ethers.utils.parseUnits("0.2", "gwei")
         }
@@ -158,22 +164,23 @@ let sellUSDT=async() =>{
     console.log('sellUSDT ret: ',ret);
 }
 
-let doSwap= function() {
-   
-    buyUSDT();
-    console.log('buy USDT Success');
-    sellUSDT();
-    console.log('sell USDT Success');
+let doSwap= async()=> {
+    // const ret = await buyUSDT();
+    // console.log('buy USDT Success');
+    // ret = await sellUSDT();
+    // console.log('sell USDT Success');
 }
 
+let callback=async()=>{
+    const ret = await calcPrice();
+    // if(flag ==  1) {
+    //     console.log('============');
+    //     ret = await doSwap();
+    // }
+}
 
-setInterval(function(){
-    calcPrice();
-    if(flag ==  1) {
-        console.log('============');
-        doSwap();
-    }
-},3000)
+setInterval(callback,3000);
+
 /*
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
